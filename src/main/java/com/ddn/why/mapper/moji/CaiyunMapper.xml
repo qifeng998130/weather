@@ -7,7 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="com.ddn.why.mapper.moji.CaiyunMapper">
 
 	<!-- 查询未来15天和未来5天AQI数据 -->
-	<select id="selectCaiyunDataById" resultType="com.ddn.why.domain.moji.CaiyunJson">-->
+	<select id="selectCaiyunDataById" resultType="com.ddn.why.domain.moji.CaiyunJson">
 		SELECT cityid,city,
 		conditionJson cJson,hourlyJson hJson,forecastsJson fJson,alertJson aJson,
 		createtime, updatetime FROM t_weather_caiyun WHERE cityid = #{cityid}

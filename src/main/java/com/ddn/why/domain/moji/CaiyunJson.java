@@ -59,6 +59,10 @@ public class CaiyunJson {
         return aJson;
     }
 
+    public void seAlertJson(String alertJson) {
+        this.aJson = alertJson;
+    }
+
     public String getCreatetime() {
         return createtime;
     }
