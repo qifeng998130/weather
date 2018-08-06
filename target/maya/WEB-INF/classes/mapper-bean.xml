@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 导入dtd -->
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	">
+
+	<!-- 实例化数据库连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<!--注入属性 -->
+		<property name="driverClass" value="com.mysql.jdbc.Driver"></property>
+		<property name="jdbcUrl" value="jdbc:mysql://59.110.154.157:3306/ddn?autoReconnect=true" />
+		<property name="user" value="root" />
+		<property name="password" value="root" />
+		<!-- 初始化时获取的连接数，在最大值和最小值之间 -->
+		<property name="initialPoolSize" value="5" />
+		<!-- 最大连接数 -->
+		<property name="maxPoolSize" value="20" />
+		<!-- 最小连接数 -->
+		<property name="minPoolSize" value="3" />
+		<!-- 测试链接 -->
+		<property name="automaticTestTable" value="C3P0Test" />
+		
+		<property name="testConnectionOnCheckout" value="true" />
+		<!-- 异步检测链接的有效性 -->
+		<property name="testConnectionOnCheckin" value="true" />
+		<!--每半个小时检查一次所有连接池中的空闲连接。Default: 0 -->
+		<property name="idleConnectionTestPeriod" value="60" />
+	</bean>
+
+	<!--实例化SQLSessionFactory -->
+	<bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!--注入DataSource -->
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 通过扫描产生Mapper接口的代理类 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!--给扫描器注入SQLSessionFactory对象 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean" />
+		<!--扫描basePackage下面的Mapper接口产生代理对象 -->
+		<property name="basePackage" value="com.ddn.why.mapper" />
+	</bean>
+
+</beans>

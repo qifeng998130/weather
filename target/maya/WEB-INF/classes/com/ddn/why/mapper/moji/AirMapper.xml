@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 导入dtd -->
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ddn.why.mapper.moji.AirMapper">
+
+	<!-- 查询生活指数数据 -->
+	<select id="selectAirDataById" resultType="com.ddn.why.domain.moji.MojiJson">
+		SELECT cityid,city,airJson dataJson,updatetime FROM t_weather_mojiair WHERE cityid = #{cityid}
+	</select>
+	
+	<!-- 保存生活指数数据 -->
+	<insert id="saveAirJson">
+		INSERT INTO t_weather_mojiair (
+			cityid,city,airJson,createtime,updatetime
+		) VALUES (
+			#{cityid},#{city},#{airJson},#{createtime},#{createtime}
+		)
+	</insert>
+	
+	<!-- 更新生活指数数据 -->
+	<update id="updateAirJson">
+		UPDATE t_weather_mojiair SET
+			airJson = #{airJson},
+			updatetime = #{updatetime}
+		WHERE cityid = #{cityid}
+	</update>
+	
+	
+</mapper>
+

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 导入dtd -->
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ddn.why.mapper.danmu.DanmuMapper">
+
+	<!-- 保存弹幕 -->
+	<insert id="saveDanmu">
+		INSERT INTO t_weather_danmu (
+			danmuid,content,uuid,timestamp
+		) VALUES (
+			null,#{content},#{uuid},#{timestamp}
+		)
+	</insert>
+	
+	<!-- 查询时间戳之后的所有弹幕 -->
+	<select id="selectDanmuListByTime" resultType="com.ddn.why.domain.danmu.Danmu">
+		SELECT danmuid,content,uuid,timestamp FROM t_weather_danmu WHERE timestamp > #{timestamp}
+	</select>
+	
+	<!-- 查询设备是否已经存在 -->
+	<select id="selectDeviceToken" resultType="java.lang.Integer">
+		SELECT id FROM t_weather_devicetoken WHERE device_token = #{currentToken} LIMIT 1
+	</select>
+	
+	<!-- 保存设备token -->
+	<insert id="saveDeviceToken">
+		INSERT INTO t_weather_devicetoken (id,device_token,createtime,updatetime)
+		VALUES (
+			null,#{currentToken},#{createtime},#{createtime}
+		)
+	</insert>
+	
+	<!-- 更新设备活跃时间 -->
+	<update id="updateDeviceToken">
+		UPDATE t_weather_devicetoken SET
+			updatetime = #{updatetime}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 统计除当前设备外一共有多个 -->
+	<select id="countDeviceToken" resultType="java.lang.Integer">
+		SELECT count(id) FROM t_weather_devicetoken WHERE updatetime &gt; #{timestamp} AND device_token &lt;&gt; #{currentToken} 
+	</select>
+	
+	<!-- 分页查询设备token -->
+	<select id="selectDeviceTokenList" resultType="java.lang.String">
+		SELECT device_token FROM t_weather_devicetoken
+		WHERE updatetime &gt; #{timestamp} AND device_token &lt;&gt; #{currentToken} LIMIT #{start},#{rows}
+	</select>
+	
+</mapper>
+

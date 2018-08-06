@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 导入dtd -->
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ddn.why.mapper.moji.CaiyunMapper">
+
+	<!-- 查询未来15天和未来5天AQI数据 -->
+	<select id="selectCaiyunDataById" resultType="com.ddn.why.domain.moji.CaiyunJson">-->
+		SELECT cityid,city,
+		conditionJson cJson,hourlyJson hJson,forecastsJson fJson,alertJson aJson,
+		createtime, updatetime FROM t_weather_caiyun WHERE cityid = #{cityid}
+	</select>
+	<!-- 保存未来数据 -->
+	<insert id="saveCaiyunDataJson">
+		INSERT INTO t_weather_caiyun (
+			cityid,city,conditionJson,hourlyJson,forecastsJson,alertJson,createtime,updatetime
+		) VALUES (
+			#{cityid},#{city},#{conditionJson},#{hourlyJson},#{forecastsJson},#{alertJson},#{createtime},#{createtime}
+		)
+	</insert>
+	
+	<!-- 更新未来数据 -->
+	<update id="updateCaiyunDataJson">
+		UPDATE t_weather_caiyun SET
+			conditionJson = #{conditionJson},
+			hourlyJson = #{hourlyJson},
+			forecastsJson = #{forecastsJson},
+			alertJson = #{alertJson},
+			updatetime = #{updatetime}
+		WHERE cityid = #{cityid}
+	</update>
+	
+	
+</mapper>

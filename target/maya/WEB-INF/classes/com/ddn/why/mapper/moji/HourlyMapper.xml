@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 导入dtd -->
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ddn.why.mapper.moji.HourlyMapper">
+
+	<!-- 查询限行数据 -->
+	<select id="selectHourlyDataById" resultType="com.ddn.why.domain.moji.MojiJson">
+		SELECT cityid,city,hourlyJson dataJson,updatetime FROM t_weather_mojihourly WHERE cityid = #{cityid}
+	</select>
+	
+	<!-- 保存限行数据 -->
+	<insert id="saveHourlyJson">
+		INSERT INTO t_weather_mojihourly (
+			cityid,city,hourlyJson,createtime,updatetime
+		) VALUES (
+			#{cityid},#{city},#{hourlyJson},#{createtime},#{createtime}
+		)
+	</insert>
+	
+	<!-- 更新限行数据 -->
+	<update id="updateHourlyJson">
+		UPDATE t_weather_mojihourly SET
+			hourlyJson = #{hourlyJson},
+			updatetime = #{updatetime}
+		WHERE cityid = #{cityid}
+	</update>
+	
+	
+</mapper>
+
