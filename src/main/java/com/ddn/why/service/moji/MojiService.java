@@ -78,7 +78,8 @@ public interface MojiService {
 	 * @param province
 	 * @return
 	 */
-	Map<String, Object> selectMoJiCityId(String district, String province);
+	Map<String, Object> selectMoJiCityId(String district, String province, String cityname);
+
 
 	/**
 	 * 细化处理秘籍数据api
@@ -86,6 +87,6 @@ public interface MojiService {
 	 * @param req
 	 * @return
 	 */
-	Map<String, Object> saveAndgetMoJiDataService(String cityId, HttpServletRequest req);
+	Map<String, Object> saveAndgetMoJiDataService(String cityId, String location, HttpServletRequest req);
 
 }

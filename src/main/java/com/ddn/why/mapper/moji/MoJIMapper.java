@@ -46,6 +46,15 @@ public interface MoJIMapper {
 	 * @return
 	 */
 	City selectMoJiCityId(@Param("district")String district,@Param("province")String province);
+
+
+	/**
+	 * 查询cityId
+	 * @param cityname
+	 * @return
+	 */
+	City selectMoJiCityIdByName(@Param("cityname")String cityname);
+
 	
 	/**
 	 * 根据cityid查询城市名及省

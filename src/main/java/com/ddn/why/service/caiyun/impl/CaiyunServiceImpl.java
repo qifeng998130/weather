@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ddn.why.domain.moji.CaiyunJson;
+import com.ddn.why.domain.moji.CaiyunForecastData;
 import com.ddn.why.domain.moji.MojiJson;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -63,7 +64,7 @@ public class CaiyunServiceImpl implements CaiyunService {
             iconNight = "2";
             name = "阴";
         } else if (icon.equals("RAIN")) {
-            if (intensity > 0 && intensity <= 0.9) {
+            if (intensity >= 0 && intensity <= 0.9) {
                 iconDay = "7";
                 iconNight = "7";
                 name = "小雨";
@@ -78,9 +79,19 @@ public class CaiyunServiceImpl implements CaiyunService {
             }
 
         } else if (icon.equals("SNOW")) {
-            iconDay = "15";
-            iconNight = "15";
-            name = "雪";
+            if (intensity >= 0 && intensity <= 0.9) {
+                iconDay = "14";
+                iconNight = "14";
+                name = "小雪";
+            } else if (intensity > 0.9 && intensity <= 2.87) {
+                iconDay = "15";
+                iconNight = "15";
+                name = "中雪";
+            } else if (intensity > 2.87) {
+                iconDay = "16";
+                iconNight = "16";
+                name = "大雪";
+            }
         } else if (icon.equals("WIND")) {
             iconDay = "0";
             iconNight = "30";
@@ -120,7 +131,7 @@ public class CaiyunServiceImpl implements CaiyunService {
             value = "2";
             name = "阴";
         } else if (icon.equals("RAIN")) {
-            if (intensity >= 0.05 && intensity <= 0.9) {
+            if (intensity >= 0 && intensity <= 0.9) {
                 value = "7";
                 name = "小雨";
             } else if (intensity > 0.9 && intensity <= 2.87) {
@@ -132,14 +143,14 @@ public class CaiyunServiceImpl implements CaiyunService {
             }
 
         } else if (icon.equals("SNOW")) {
-            if (intensity >= 0.05 && intensity <= 0.9) {
-                value = "7";
+            if (intensity >= 0 && intensity <= 0.9) {
+                value = "14";
                 name = "小雪";
             } else if (intensity > 0.9 && intensity <= 2.87) {
-                value = "8";
+                value = "15";
                 name = "中雪";
             } else if (intensity > 2.87) {
-                value = "9";
+                value = "16";
                 name = "大雪";
             }
 
@@ -252,7 +263,7 @@ public class CaiyunServiceImpl implements CaiyunService {
         return name;
     }
 
-    public Map<String, Object> getCaiyunAppResult(City city) {
+    public Map<String, Object> getCaiyunAppResult(City city, String location) {
 
         Map<String, Object> map = new HashMap<String, Object>();
 
@@ -276,16 +287,17 @@ public class CaiyunServiceImpl implements CaiyunService {
         } else {
 
             String caiyun_key = "YEja6ZStAz-wBzF6";
-            String location = city.getLocation();
-            if(location == null){
+            if(location==null || "".equals(location)){
+                location = city.getLocation();
+                if(location == null || "".equals(location)){
+                    JSONObject locationjson = getGaodeAddressCode(city.getProvince(), city.getName());
+                    location = locationjson.getString("location");
+                    if(location == null || "".equals(location)) {
+                        return map;
+                    }
+                    moJIMapper.updateCityLocationById(city.getCityId(), location);
 
-                JSONObject locationjson = getGaodeAddressCode(city.getProvince(), city.getName());
-                location = locationjson.getString("location");
-                if(location == null) {
-                    return map;
                 }
-                moJIMapper.updateCityLocationById(city.getCityId(), location);
-
             }
 
             String host = "https://api.caiyunapp.com";
@@ -373,6 +385,8 @@ public class CaiyunServiceImpl implements CaiyunService {
                     condition.put("winddirect", windDir);
                     condition.put("windpower", windpower);
                     condition.put("windspeed", String.format("%.2f", tran_windpower_speed));
+                    JSONObject comfort = realtime.getJSONObject("comfort");
+                    condition.put("cycomfort", comfort);
 
                     Map<String, String> icon = getIconValue(realtime.getString("skycon"), sunrise_date, sunset_date, intensity);
 
@@ -466,8 +480,8 @@ public class CaiyunServiceImpl implements CaiyunService {
 //                    JSONArray daily_pres_array = daily.getJSONArray("pres");
 //                    JSONArray daily_ultraviolet_array = daily.getJSONArray("ultraviolet");
 //                    JSONArray daily_pm25_array = daily.getJSONArray("pm25");
-//                    JSONArray daily_dressing_array = daily.getJSONArray("dressing");
-//                    JSONArray daily_carWashing_array = daily.getJSONArray("carWashing");
+                        JSONArray daily_carWashing_array = daily.getJSONArray("carWashing");
+                        JSONArray daily_dressing_array = daily.getJSONArray("dressing");
                         JSONArray daily_wind_array = daily.getJSONArray("wind");
                         JSONArray imgNight_array = daily.getJSONArray("skycon_20h_32h");
                         JSONArray imgDay_array = daily.getJSONArray("skycon_08h_20h");
@@ -483,8 +497,8 @@ public class CaiyunServiceImpl implements CaiyunService {
 //                        JSONObject daily_pres_json = daily_pres_array.getJSONObject(i);
 //                        JSONObject daily_ultraviolet_json = daily_ultraviolet_array.getJSONObject(i);
 //                        JSONObject daily_pm25_json = daily_pm25_array.getJSONObject(i);
-//                        JSONObject daily_dressing_json = daily_dressing_array.getJSONObject(i);
-//                        JSONObject daily_carWashing_json = daily_carWashing_array.getJSONObject(i);
+                            JSONObject daily_dressing_json = daily_dressing_array.getJSONObject(i);
+                            JSONObject daily_carWashing_json = daily_carWashing_array.getJSONObject(i);
                             JSONObject daily_precipitation_json = daily_precipitation_array.getJSONObject(i);
                             JSONObject imgNight_json = imgNight_array.getJSONObject(i);
                             JSONObject imgDay_json = imgDay_array.getJSONObject(i);
@@ -495,6 +509,9 @@ public class CaiyunServiceImpl implements CaiyunService {
                             Map<String, String> imgDayobj = getIconHourly(imgDay_json.getString("value"), intensity_avg);
 
 
+                            System.out.println("intensity_avg: " + intensity_avg);
+                            System.out.println("imgDay_json: " + imgDay_json);
+                            System.out.println("imgDayobj: " + imgDayobj);
                             JSONObject daily_wind_json = daily_wind_array.getJSONObject(i);
                             String date = daily_skycon_json.getString("date");
 
@@ -511,6 +528,7 @@ public class CaiyunServiceImpl implements CaiyunService {
 
                             Integer daily_aqi_avg = Math.round(daily_aqi_json.getFloat("avg"));
                             AqiForecast aForecast = new AqiForecast(daily_aqi_json.getString("date"), DateUtils.getDateYMDHMS(), daily_aqi_avg.toString());
+
                             JSONObject daily_avg_obj = daily_wind_json.getJSONObject("avg");
                             Double daily_avg_speed = daily_avg_obj.getDouble("speed");
                             Double windspeedDay = daily_avg_speed * 0.2777778;
@@ -522,12 +540,15 @@ public class CaiyunServiceImpl implements CaiyunService {
 
                             System.out.println("imgDayobj: " + imgDayobj);
                             System.out.println("imgDay_json: " + imgDay_json);
-
+                            CaiyunForecastData daily_dressing_forecast = new CaiyunForecastData(daily_dressing_json.getString("index"),
+                                    daily_dressing_json.getString("desc"), daily_dressing_json.getString("datetime"));
+                            CaiyunForecastData daily_carWashing_forecast = new CaiyunForecastData(daily_carWashing_json.getString("index"),
+                                    daily_carWashing_json.getString("desc"), daily_carWashing_json.getString("datetime"));
                             Forecast forecast = new Forecast(date, updatetime.toString(), imgDayobj.get("name"), imgDayobj.get("iconDay"), sunrise, sunset, tempDay.toString(),
                                     winddirectDay, windpowerDay + "级", windspeedDay_string, imgNightobj.get("name"), imgNightobj.get("iconNight"),
                                     "test", "2018-00-00 00:00:00", "2018-00-00 00:00:00",
                                     tempNight.toString(),
-                                    winddirectDay, windpowerNight + "级", windspeedDay_string, aForecast);
+                                    winddirectDay, windpowerNight + "级", windspeedDay_string, aForecast,daily_dressing_forecast,daily_carWashing_forecast);
                             forecasts.add(forecast);
 
                         }
@@ -565,12 +586,19 @@ public class CaiyunServiceImpl implements CaiyunService {
                             JSONObject alert_json_temp = content_alert.getJSONObject(i);
                             JSONObject add_alert = new JSONObject();
                             String level = alert_json_temp.getString("code");
+                            String level_type_string = level_type_map.get(level.substring(0,2));
+                            String level_name_string = level_code_map.get(level.substring(2));
+                            System.out.print("content_alert "+level.substring(2));
+                            System.out.print("content_alert "+level.substring(0,2));
+
+                            String pubtimestamp= DateUtils.getTimeByMillis(alert_json_temp.getLongValue("pubtimestamp")*1000);
+                            System.out.print("content_alert "+pubtimestamp);
                             add_alert.put("infoid", "");
-                            add_alert.put("level", level_type_map.get(level.substring(2)));
-                            add_alert.put("pub_time", alert_json_temp.getIntValue("pubtimestamp"));
-                            add_alert.put("name", level_code_map.get(level.substring(0,2)));
+                            add_alert.put("level", level_type_string);
+                            add_alert.put("pub_time", pubtimestamp);
+                            add_alert.put("name", level_name_string);
                             add_alert.put("title", alert_json_temp.getString("title"));
-                            add_alert.put("type", level);
+                            add_alert.put("type",  level_name_string+ level_type_string);
                             add_alert.put("content", alert_json_temp.getString("description"));
                             alert_array.add(add_alert);
                         }

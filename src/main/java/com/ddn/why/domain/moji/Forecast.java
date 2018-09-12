@@ -25,6 +25,8 @@ public class Forecast {
 	private String windspeedNight;// 风速
 
 	private AqiForecast aqiForecast;
+	private CaiyunForecastData cydressing;
+	private CaiyunForecastData cycomfrot;
 
 	public String getDate() {
 		return date;
@@ -186,12 +188,30 @@ public class Forecast {
 		this.aqiForecast = aqiForecast;
 	}
 
+
+	public CaiyunForecastData getCydressing() { return cydressing; }
+
+	public void setCydressing(CaiyunForecastData cydressing) {
+		this.cydressing = cydressing;
+	}
+
+
+	public CaiyunForecastData getCycomfrot() { return cycomfrot; }
+
+	public void setCycomfrot(CaiyunForecastData cycomfrot) {
+		this.cycomfrot = cycomfrot;
+	}
+
+
 	public Forecast() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 
-	public Forecast(String date, String updatetime, String conditionDay, String imgDay, String sunrise, String sunset, String tempDay, String winddirectDay, String windpowerDay, String windspeedDay, String conditionNight, String imgNight, String moonphase, String moonrise, String moonset, String tempNight, String winddirectNight, String windpowerNight, String windspeedNight, AqiForecast aqiForecast) {
+	public Forecast(String date, String updatetime, String conditionDay, String imgDay, String sunrise, String sunset, String tempDay,
+					String winddirectDay, String windpowerDay, String windspeedDay, String conditionNight, String imgNight,
+					String moonphase, String moonrise, String moonset, String tempNight, String winddirectNight,
+					String windpowerNight, String windspeedNight, AqiForecast aqiForecast, CaiyunForecastData daily_dressing_forecast,CaiyunForecastData daily_carWashing_forecast) {
 		super();
 		this.date = date;
 		this.updatetime = updatetime;
@@ -213,6 +233,11 @@ public class Forecast {
 		this.windpowerNight = windpowerNight;
 		this.windspeedNight = windspeedNight;
 		this.aqiForecast = aqiForecast;
+		if(daily_dressing_forecast != null && daily_carWashing_forecast!=null){
+
+			this.cydressing = daily_dressing_forecast;
+			this.cycomfrot = daily_carWashing_forecast;
+		}
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,9 +38,9 @@ public class MoJiController {
 	
 	@RequestMapping("/getMoJiCityId")
 	@ResponseBody
-	public Map<String, Object> getMoJiCityId(String district,String province){
+	public Map<String, Object> getMoJiCityId(String district,String province, String city){
 		//System.out.println(district+"---"+province);
-		Map<String, Object> resultMap = mojiService.selectMoJiCityId(district,province);
+		Map<String, Object> resultMap = mojiService.selectMoJiCityId(district,province,city);
 		return resultMap;
 	}
 
@@ -49,8 +50,9 @@ public class MoJiController {
 	 * 墨迹数据 先根据citycode从数据库获取，如果存在并且更新时间在半小时内则把对应的weather转换成json返回
 	 * 如果数据库不存在或者更新时间超过半小时则从ali接口获取，获取后，判断数据库中是否已经存此citycode的天气信息，有则更新，无则保存
 	 * 
-	 * @param citycode
+	 * @param
 	 * @return
+	 *
 	 */
 	@RequestMapping("/getMoJiWeather")
 	@ResponseBody
@@ -60,10 +62,18 @@ public class MoJiController {
 		Map<String, Object> resultMap = new HashMap<>();
 		for (int i = 0; i < cityIds.length; i++) {
 			String cityId = cityIds[i];
-			//获取细化处理后的数据
+			String location = null;
 			Map<String, Object> MoJiWeather = new HashMap<>();
 			try {
-				MoJiWeather = mojiService.saveAndgetMoJiDataService(cityId,req);
+				boolean flag = cityId.matches("[0-9]{1,}");
+				if(!flag){
+
+					JSONObject cityJson= JSONObject.parseObject(cityId);
+					cityId = cityJson.getString("cityid");
+					location = cityJson.getString("location");
+				}
+				//获取细化处理后的数据
+				MoJiWeather = mojiService.saveAndgetMoJiDataService(cityId, location, req);
 				resultMap.put("msg", "OK");
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -118,7 +128,7 @@ public class MoJiController {
 			//获取细化处理后的数据
 			Map<String, Object> MoJiWeather = new HashMap<>();
 			try {
-				MoJiWeather = mojiService.saveAndgetMoJiDataService(cityId,req);
+				MoJiWeather = mojiService.saveAndgetMoJiDataService(cityId,null, req);
 				resultMap.put("msg", "OK");
 			} catch (Exception e) {
 				e.printStackTrace();

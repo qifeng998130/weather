@@ -73,11 +73,19 @@ public class MojiServiceImpl implements MojiService {
 
     // 查询cityId
     @Override
-    public Map<String, Object> selectMoJiCityId(String district, String province) {
+    public Map<String, Object> selectMoJiCityId(String district, String province, String cityname) {
         Map<String, Object> map = new HashMap<>();
         City city = moJIMapper.selectMoJiCityId(district, province);
         if (city == null) {
-            map.put("msg", "不存在此城市");
+            city = moJIMapper.selectMoJiCityIdByName(cityname);
+            if(city == null){
+                map.put("msg", "不存在此城市");
+
+            } else {
+
+                map.put("msg", "OK");
+                map.put("data", city);
+            }
         } else {
             // 设置地址名为查询条件中的地址名
             city.setName(district);
@@ -248,7 +256,10 @@ public class MojiServiceImpl implements MojiService {
                     aForecast = aqiForecastArray.getObject(i, AqiForecast.class);
                 }
                 // 创建对象封装数据
-                Forecast forecast = new Forecast(date, updatetime, conditionDay, imgDay, sunrise, sunset, tempDay, winddirectDay, windpowerDay, windspeedDay, conditionNight, imgNight, moonphase, moonrise, moonset, tempNight, winddirectNight, windpowerNight, windspeedNight, aForecast);
+                Forecast forecast = new Forecast(date, updatetime, conditionDay, imgDay, sunrise,
+                        sunset, tempDay, winddirectDay, windpowerDay, windspeedDay, conditionNight,
+                        imgNight, moonphase, moonrise, moonset, tempNight, winddirectNight,
+                        windpowerNight, windspeedNight, aForecast, null,null);
                 forecasts.add(forecast);
             }
         }
@@ -310,62 +321,60 @@ public class MojiServiceImpl implements MojiService {
      * 细化处理墨迹api2.0 对7个接口分别处理
      */
     @Override
-    public Map<String, Object> saveAndgetMoJiDataService(String cityId, HttpServletRequest req) {
+    public Map<String, Object> saveAndgetMoJiDataService(String cityId, String location, HttpServletRequest req) {
         Map<String, Object> map = new HashMap<String, Object>();
         // 根据id查询城市信息
-        try {
-            City city = moJIMapper.selectCityNameById(cityId);
-            // System.out.println("cityname:" + city.getName() + "---province:" +
-            // city.getProvince());
-            // 城市信息
-            ForecastInfo forecastInfo = new ForecastInfo(cityId, city.getName(), DateUtils.getDateYMDHMS());
-            // 添加城市信息
-            map.put("forecast_information", forecastInfo);
+        City city = moJIMapper.selectCityNameById(cityId);
+        // System.out.println("cityname:" + city.getName() + "---province:" +
+        // city.getProvince());
+        // 城市信息
+        ForecastInfo forecastInfo = new ForecastInfo(cityId, city.getName(), DateUtils.getDateYMDHMS());
+        // 添加城市信息
+        map.put("forecast_information", forecastInfo);
+        String datasource = "";
+        // 添加限行数据---每天
+        map.put("limit", limitControl(cityId, city, req));
 
-            // 添加限行数据---每天
-            map.put("limit", limitControl(cityId, city, req));
+        if (switch_moji) {
+            datasource = "数据来自墨迹天气";
+            Condition current = currentControl(cityId, city.getName(), req);
+            map.put("current_conditions", current);
+            // 添加实况数据（current_conditions）---包含生活指数（每天）和空气质量（每天）
+            // 添加未来15天数据和未来5天AQI（forecast_conditions）---每天
+            map.put("forecast_conditions", forecast15daysControl(cityId, city.getName(), req));
 
-            if (switch_moji) {
-                Condition current = currentControl(cityId, city.getName(), req);
-                map.put("current_conditions", current);
-                // 添加实况数据（current_conditions）---包含生活指数（每天）和空气质量（每天）
-                // 添加未来15天数据和未来5天AQI（forecast_conditions）---每天
-                map.put("forecast_conditions", forecast15daysControl(cityId, city.getName(), req));
+            // 添加小时天气预报（hourly）---每小时
+            map.put("hourly", hourlyControl(cityId, city.getName(), req));
+            // 天气预警信息
+            map.put("alert", alertControl(cityId, city.getName(), req));
+            map.put("datasource", datasource);
 
-                // 添加小时天气预报（hourly）---每小时
-                map.put("hourly", hourlyControl(cityId, city.getName(), req));
-                // 天气预警信息
-                map.put("alert", alertControl(cityId, city.getName(), req));
+        } else {
+            datasource = "数据来自彩云天气";
+            Map<String, Object> caiyunObj = caiyunServiceImpl.getCaiyunAppResult(city, location);
 
-            } else {
-
-                Map<String, Object> caiyunObj = caiyunServiceImpl.getCaiyunAppResult(city);
-
-                // 生活指数
-                JSONObject dateJson = getMoJiJsonResult("index", cityId, INDEX_TOKEN, req).getJSONObject("data").getJSONObject("liveIndex");
-                String indexJson = dateJson.getString(DateUtils.getDate());
-                List<Index> indexs = JSONObject.parseArray(indexJson, Index.class);
-                // 除去息斯敏
-                for (int i = 0; i < indexs.size(); i++) {
-                    Index index = indexs.get(i);
-                    if (index.getName().equals("息斯敏过敏指数")) {
-                        indexs.remove(index);
-                    }
+            // 生活指数
+            JSONObject dateJson = getMoJiJsonResult("index", cityId, INDEX_TOKEN, req).getJSONObject("data").getJSONObject("liveIndex");
+            String indexJson = dateJson.getString(DateUtils.getDate());
+            List<Index> indexs = JSONObject.parseArray(indexJson, Index.class);
+            // 除去息斯敏
+            for (int i = 0; i < indexs.size(); i++) {
+                Index index = indexs.get(i);
+                if (index.getName().equals("息斯敏过敏指数")) {
+                    indexs.remove(index);
                 }
-
-                JSONObject caiyunapp_condition = (JSONObject) caiyunObj.get("condition");
-                caiyunapp_condition.put("indexs", indexs);
-                map.put("current_conditions", caiyunapp_condition);
-                map.put("hourly", caiyunObj.get("hourly"));
-                map.put("forecast_conditions", caiyunObj.get("forecasts"));
-                // 天气预警信息
-                map.put("alert", caiyunObj.get("alert"));
-
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
+            JSONObject caiyunapp_condition = (JSONObject) caiyunObj.get("condition");
+            caiyunapp_condition.put("indexs", indexs);
+            map.put("current_conditions", caiyunapp_condition);
+            map.put("hourly", caiyunObj.get("hourly"));
+            map.put("forecast_conditions", caiyunObj.get("forecasts"));
+            // 天气预警信息
+            map.put("alert", caiyunObj.get("alert"));
+            map.put("datasource", datasource);
+
+        }
         return map;
 
     }
@@ -573,7 +582,9 @@ public class MojiServiceImpl implements MojiService {
                         //System.out.println(aForecast.getDate());
                     }
                     // 创建对象封装数据
-                    Forecast forecast = new Forecast(date, updatetime, conditionDay, imgDay, sunrise, sunset, tempDay, winddirectDay, windpowerDay, windspeedDay, conditionNight, imgNight, moonphase, moonrise, moonset, tempNight, winddirectNight, windpowerNight, windspeedNight, aForecast);
+                    Forecast forecast = new Forecast(date, updatetime, conditionDay, imgDay, sunrise, sunset, tempDay,
+                            winddirectDay, windpowerDay, windspeedDay, conditionNight, imgNight, moonphase,
+                            moonrise, moonset, tempNight, winddirectNight, windpowerNight, windspeedNight, aForecast, null, null);
                     forecasts.add(forecast);
                 }
             }

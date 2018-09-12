@@ -41,7 +41,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		 	AND province LIKE CONCAT('%',#{province},'%')
 		LIMIT 1
 	</select>
-	
+
+	<!-- 查询cityId -->
+	<select id="selectMoJiCityIdByName" resultType="com.ddn.why.domain.moji.City">
+		SELECT id cityId,name,location FROM t_weather_citys
+		WHERE
+			name LIKE CONCAT('%',#{cityname},'%')
+		LIMIT 1
+	</select>
 	<!-- 根据cityid查询城市名和省 -->
 	<select id="selectCityNameById" resultType="com.ddn.why.domain.moji.City">
 		SELECT id cityId,name,province,location FROM t_weather_citys
