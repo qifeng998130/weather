@@ -1,5 +1,5 @@
 package com.ddn.why.service.umeng;
-
+import java.util.*;
 import com.ddn.why.utils.umeng.AndroidBroadcast;
 import com.ddn.why.utils.umeng.AndroidUnicast;
 
@@ -10,7 +10,12 @@ public interface UmengService {
 	 * @return
 	 */
 	boolean uMengBroadcastPush(AndroidBroadcast broadcast , String content , String uuid);
-	
+
+	boolean alertuMengListcastPush(String content, String cityId, int minute);
+
+	boolean saveCurrentToken( String currentToken);
+
+
 	/**
 	 * 分页推送当前设备打开应用minute分钟前到现在这段时间内，除当前设备外的其他设备
 	 * @param unicast 列播

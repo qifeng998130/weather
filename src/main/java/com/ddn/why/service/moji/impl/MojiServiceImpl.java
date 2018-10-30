@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ddn.why.utils.umeng.AndroidNotification;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ import com.ddn.why.mapper.moji.LimitMapper;
 import com.ddn.why.mapper.moji.MoJIMapper;
 import com.ddn.why.service.moji.MojiService;
 import com.ddn.why.service.caiyun.impl.CaiyunServiceImpl;
+import com.ddn.why.service.umeng.impl.UmengServiceImpl;
+
+import com.ddn.why.utils.umeng.AndroidBroadcast;
 import com.ddn.why.utils.DateUtils;
 
 
@@ -46,6 +50,8 @@ public class MojiServiceImpl implements MojiService {
 
     @Autowired
     private CaiyunServiceImpl caiyunServiceImpl;
+    @Autowired
+    private UmengServiceImpl umengServiceIml;
     @Autowired
     private MoJIMapper moJIMapper;
     @Autowired
@@ -352,19 +358,7 @@ public class MojiServiceImpl implements MojiService {
         } else {
             datasource = "数据来自彩云天气";
             Map<String, Object> caiyunObj = caiyunServiceImpl.getCaiyunAppResult(city, location);
-
-            // 生活指数
-            JSONObject dateJson = getMoJiJsonResult("index", cityId, INDEX_TOKEN, req).getJSONObject("data").getJSONObject("liveIndex");
-            String indexJson = dateJson.getString(DateUtils.getDate());
-            List<Index> indexs = JSONObject.parseArray(indexJson, Index.class);
-            // 除去息斯敏
-            for (int i = 0; i < indexs.size(); i++) {
-                Index index = indexs.get(i);
-                if (index.getName().equals("息斯敏过敏指数")) {
-                    indexs.remove(index);
-                }
-            }
-
+            List<Index> indexs = getShenghuozhishu(cityId, city.getName(), req);
             JSONObject caiyunapp_condition = (JSONObject) caiyunObj.get("condition");
             caiyunapp_condition.put("indexs", indexs);
             map.put("current_conditions", caiyunapp_condition);
@@ -372,6 +366,7 @@ public class MojiServiceImpl implements MojiService {
             map.put("forecast_conditions", caiyunObj.get("forecasts"));
             // 天气预警信息
             map.put("alert", caiyunObj.get("alert"));
+
             map.put("datasource", datasource);
 
         }
@@ -379,7 +374,42 @@ public class MojiServiceImpl implements MojiService {
 
     }
 
+    private List<Index> getShenghuozhishu(String cityId, String city, HttpServletRequest req){
+            // 处理生活指数
+            List<Index> indexs = new ArrayList<>();
+            // 查询数据库
+            MojiJson ddindexJson = indexMapper.selectIndexDataById(cityId);
+            //System.out.println(ddindexJson);
+            // 判断时间是否是当天更新的---DateUtils.dateAmongMin(ddindexJson.getUpdatetime(), INDEX_UPDATE_TIME)
 
+            if (ddindexJson != null && DateUtils.dateAmongMin(ddindexJson.getUpdatetime(), INDEX_UPDATE_TIME)) {
+                // System.out.println("index>>>>>>>来自豆豆鸟");
+                // 转换成集合
+                indexs = JSONArray.parseArray(ddindexJson.getDataJson(), Index.class);
+            } else {
+                // System.out.println("index>>>>>>>来自墨迹");
+                // 生活指数
+                JSONObject dateJson = getMoJiJsonResult("index", cityId, INDEX_TOKEN, req).getJSONObject("data").getJSONObject("liveIndex");
+                String indexJson = dateJson.getString(DateUtils.getDate());
+                //判空？？？
+                indexs = JSONObject.parseArray(indexJson, Index.class);
+                // 除去息斯敏指数
+                for (int i = 0; i < indexs.size(); i++) {
+                    Index index = indexs.get(i);
+                    if (index.getName().equals("息斯敏过敏指数")) {
+                        indexs.remove(index);
+                    }
+                }
+                // 保存或者更新
+                if (ddindexJson == null) {
+                    // 保存
+                    indexMapper.saveIndexJson(cityId, city, JSON.toJSONString(indexs), DateUtils.getDateYMDHMS());
+                } else {
+                    indexMapper.updateIndexJson(cityId, JSON.toJSONString(indexs), DateUtils.getDateYMDHMS());
+                }
+            }
+            return indexs;
+    }
     /**
      * 实时天气数据处理---每半小时，生活指数---当天，空气质量---当天
      *

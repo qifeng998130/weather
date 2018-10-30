@@ -71,7 +71,16 @@ public class DanmuController {
 	@ResponseBody
 	public List<Danmu> getDanmuList(String currentToken) {
 		// System.out.println("-------------------------------");
+
 		return danmuService.controlDanmuListService(24,currentToken);
+	}
+
+	@RequestMapping("/saveCurrentToken")
+	@ResponseBody
+	public boolean saveCurrentToken(String currentToken) {
+		// System.out.println("-------------------------------");
+		umengService.saveCurrentToken(currentToken);
+		return true;
 	}
 
 	@Test

@@ -22,6 +22,26 @@ public class UmengServiceImpl implements UmengService {
 
 	private PushClient client = new PushClient();
 
+	private AndroidUnicast unicast = null;
+
+	@Override
+	public boolean saveCurrentToken(String currentToken){
+		// 判断当前token是否为空，不为空再查询保存--这里主要是更新设备的活跃时间
+		if (!StringUtils.isEmpty(currentToken)) {
+			// 查询设备信息，判断是否已经存在
+			Integer deviceId = danmuMapper.selectDeviceToken(currentToken);
+			//当前时间戳
+			long timestamp = System.currentTimeMillis();
+			if (deviceId == null) {
+				// 如果不存在这保存
+				danmuMapper.saveDeviceToken(currentToken,timestamp);
+			}else {
+				//这里主要是更新设备的活跃时间
+				danmuMapper.updateDeviceToken(deviceId,timestamp);
+			}
+		}
+		return true;
+	}
 	// 友盟广播推送---向app的所有设备推送
 	@Override
 	public boolean uMengBroadcastPush(AndroidBroadcast broadcast, String content, String uuid) {
@@ -46,6 +66,44 @@ public class UmengServiceImpl implements UmengService {
 		return flag;
 	}
 
+	@Override
+	public boolean alertuMengListcastPush(String content, String cityId, int minute) {
+		try {
+
+
+			unicast = new AndroidUnicast("5abc6307a40fa31dab000085", "83sstqceladbzomvbv7tkharqxxjjadd");
+			//计算时间戳
+			long timestamp = System.currentTimeMillis() - minute * 60 *1000;
+
+			// 查询设备总数
+			Integer deviceTotal = danmuMapper.countDeviceTokenAll(timestamp);
+			System.out.print("======deviceTotal======"+deviceTotal);
+			for (int pgnum = 0; pgnum <= deviceTotal / 500; pgnum++) {
+				// 查询除当前设备外的500个
+				List<String> deviceTokens = danmuMapper.selectDeviceTokenListAll(pgnum * 500, 500,timestamp);
+				// 拼接要推送的设备deviceToken
+				StringBuffer sb = new StringBuffer();
+				for (String deviceToken : deviceTokens) {
+					sb.append(deviceToken).append(",");
+				}
+				if(sb.length() > 0){
+					// 设置列播的deviceToken
+					unicast.setDeviceToken(sb.substring(0, sb.length() - 1));//去掉最后一个,
+					unicast.setCustom("玛雅天气");
+					unicast.setExtraField("content", content);// 预警内容
+					unicast.setExtraField("cityId", cityId);// 城市id
+					unicast.setExtraField("type", "3");// 预警类型
+					unicast.setDisplayType(DisplayType.MESSAGE);
+					unicast.setTestMode();// 正式模式
+					client.send(unicast);// 推送
+				}
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 
 	// 列播，给指定的设备发送，每次最多500
 	@Override

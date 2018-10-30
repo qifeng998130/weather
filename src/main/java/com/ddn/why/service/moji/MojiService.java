@@ -36,7 +36,7 @@ public interface MojiService {
 	//实况天气更新频率：30分钟
 	static final int CURRENT_UPDATE_TIME = 30;
 	//生活指数更新频率：1440分钟（一天）
-	static final int INDEX_UPDATE_TIME = 1440;
+	static final int INDEX_UPDATE_TIME = 180;
 	//空气质量指数更新频率：1440分钟
 	static final int AIR_UPDATE_TIME = 1440;
 	//小时天气数据更新频率：60分钟

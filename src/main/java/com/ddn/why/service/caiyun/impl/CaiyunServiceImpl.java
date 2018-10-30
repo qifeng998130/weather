@@ -11,6 +11,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.ddn.why.domain.moji.CaiyunJson;
 import com.ddn.why.domain.moji.CaiyunForecastData;
 import com.ddn.why.domain.moji.MojiJson;
+import com.ddn.why.service.umeng.UmengService;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import com.ddn.why.mapper.moji.CaiyunMapper;
 
 import com.ddn.why.service.caiyun.CaiyunService;
 import org.springframework.stereotype.Service;
+import com.ddn.why.service.umeng.impl.UmengServiceImpl;
 import com.ddn.why.utils.HttpUtils;
 import com.ddn.why.utils.DateUtils;
 import java.text.SimpleDateFormat;
@@ -33,6 +35,9 @@ public class CaiyunServiceImpl implements CaiyunService {
     private CaiyunMapper currentCaiyunMapper;
     @Autowired
     private MoJIMapper moJIMapper;
+
+    @Autowired
+    private UmengService umengService;// 友盟推送
 
     public Map<String, String> getIconHourly(String icon, Float intensity) {
         String iconDay = "";
@@ -605,6 +610,10 @@ public class CaiyunServiceImpl implements CaiyunService {
 
                     }
 
+                    System.out.print("=============alert_array=========="+alert_array);
+                    if(alert_array != null && !alert_array.isEmpty()){
+                        umengService.alertuMengListcastPush(alert_array.toString(), city.getCityId(), 5);
+                    }
                     map.put("alert", alert_array);
                     if (catiyunJson == null) {
                         // 保存

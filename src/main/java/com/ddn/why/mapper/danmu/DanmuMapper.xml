@@ -44,12 +44,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="countDeviceToken" resultType="java.lang.Integer">
 		SELECT count(id) FROM t_weather_devicetoken WHERE updatetime &gt; #{timestamp} AND device_token &lt;&gt; #{currentToken} 
 	</select>
-	
+
+	<!-- 统计除当前设备外一共有多个 -->
+	<select id="countDeviceTokenAll" resultType="java.lang.Integer">
+		SELECT count(id) FROM t_weather_devicetoken WHERE updatetime &gt; #{timestamp}
+	</select>
+
+
 	<!-- 分页查询设备token -->
 	<select id="selectDeviceTokenList" resultType="java.lang.String">
 		SELECT device_token FROM t_weather_devicetoken
 		WHERE updatetime &gt; #{timestamp} AND device_token &lt;&gt; #{currentToken} LIMIT #{start},#{rows}
 	</select>
-	
+
+	<!-- 分页查询设备token -->
+	<select id="selectDeviceTokenListAll" resultType="java.lang.String">
+		SELECT device_token FROM t_weather_devicetoken
+		WHERE updatetime &gt; #{timestamp} LIMIT #{start},#{rows}
+	</select>
+
 </mapper>
 

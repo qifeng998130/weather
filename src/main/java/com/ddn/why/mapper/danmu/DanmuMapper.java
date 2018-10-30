@@ -42,7 +42,14 @@ public interface DanmuMapper {
 	 * @return
 	 */
 	Integer countDeviceToken(@Param("currentToken")String currentToken,@Param("timestamp")long timestamp);
-	
+
+	/**
+	 * 统计当前设备打开应用从timestamp到现在的这段时间内，除当前设备外一共有多少个设备打开
+	 * @param timestamp minute分钟前的时间戳
+	 * @return
+	 */
+	Integer countDeviceTokenAll(@Param("timestamp")long timestamp);
+
 	/**
 	 * 分页查询出当前设备外的所有设备token，加上时间判断
 	 * @param start 
@@ -51,6 +58,14 @@ public interface DanmuMapper {
 	 * @return
 	 */
 	List<String> selectDeviceTokenList(@Param("start")int start,@Param("rows")int rows,@Param("currentToken")String currentToken,@Param("timestamp")long timestamp);
+
+	/**
+	 * 分页查询出的所有设备token，加上时间判断
+	 * @param start
+	 * @param rows
+	 * @return
+	 */
+	List<String> selectDeviceTokenListAll(@Param("start")int start,@Param("rows")int rows,@Param("timestamp")long timestamp);
 
 	/**
 	 * 更新设备的活跃时间
